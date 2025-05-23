@@ -4,6 +4,184 @@ import ProductType from '../models/ProductType.model.js'; // Import model Loại
 import Brand from '../models/Brand.model.js'; // Import model Thương hiệu
 import mongoose from 'mongoose'; // Import mongoose để kiểm tra ObjectId
 
+/**
+ * @swagger
+ * tags:
+ *   name: Products
+ *   description: API để quản lý sản phẩm
+ */
+
+/**
+ * @swagger
+ * /api/products:
+ *   post:
+ *     summary: Tạo sản phẩm mới (Chỉ Admin)
+ *     tags: [Products]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - brand
+ *               - price
+ *               - stock
+ *               - model
+ *               - categories # Assuming categories is required during creation
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Tên sản phẩm
+ *                 example: Camera Canon EOS R5
+ *               brand:
+ *                 type: string
+ *                 description: ID của thương hiệu
+ *                 example: 60f0a9c1a6b7c3001f123456
+ *               origin:
+ *                 type: string
+ *                 description: Xuất xứ
+ *                 example: Nhật Bản
+ *               description:
+ *                 type: string
+ *                 description: Mô tả sản phẩm
+ *                 example: Máy ảnh Mirrorless full-frame cao cấp
+ *               price:
+ *                 type: number
+ *                 description: Giá bán (không âm)
+ *                 example: 3899.00
+ *               categories:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Mảng các ID của loại sản phẩm
+ *                 example: ["60f0a9c1a6b7c3001f123457", "60f0a9c1a6b7c3001f123458"]
+ *               stock:
+ *                 type: integer
+ *                 description: Số lượng tồn kho (không âm)
+ *                 example: 10
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Danh sách các URL hình ảnh sản phẩm
+ *                 example: ["http://example.com/img1.jpg", "http://example.com/img2.jpg"]
+ *               model:
+ *                 type: string
+ *                 description: Tên/số hiệu mẫu máy
+ *                 example: EOS R5
+ *               type:
+ *                 type: string
+ *                 description: Loại máy ảnh (DSLR, Mirrorless, v.v.)
+ *                 example: Mirrorless
+ *               sensorType:
+ *                 type: string
+ *                 description: Loại cảm biến (Full-Frame CMOS, APS-C CMOS, v.v.)
+ *                 example: Full-Frame CMOS
+ *               megapixels:
+ *                 type: number
+ *                 description: Độ phân giải (Megapixels)
+ *                 example: 45
+ *               lensMount:
+ *                 type: string
+ *                 description: Loại ngàm ống kính
+ *                 example: Canon RF
+ *               videoResolution:
+ *                 type: string
+ *                 description: Độ phân giải video tối đa (4K, 8K, v.v.)
+ *                 example: 8K DCI
+ *               connectivity:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Kết nối (Wi-Fi, Bluetooth, USB-C, v.v.)
+ *                 example: ["Wi-Fi", "Bluetooth", "USB-C"]
+ *               features:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Các tính năng nổi bật
+ *                 example: ["In-Body Image Stabilization", "Dual Card Slots"]
+ *               weight:
+ *                 type: number
+ *                 description: string
+ *                 example: 738
+ *               dimensions:
+ *                 type: string
+ *                 description: string
+ *                 example: 138.5 x 97.5 x 88.0 mm
+ *               usageInstructions:
+ *                 type: string
+ *                 description: Hướng dẫn sử dụng
+ *               certifications:
+ *                 type: array
+ *                 items: { type: 'string' }
+ *                 description: Chứng nhận (CE, FCC, v.v.)
+ *               warnings:
+ *                 type: string
+ *                 description: Cảnh báo sử dụng
+ *               availabilityType:
+ *                 type: string
+ *                 enum: ['in_stock', 'pre_order']
+ *                 description: Trạng thái có sẵn (in_stock hoặc pre_order)
+ *                 example: in_stock
+ *               preOrderDeliveryTime:
+ *                 type: string
+ *                 description: Thời gian giao hàng dự kiến (nếu là pre_order)
+ *                 example: 2-3 tuần
+ *     responses:
+ *       201:
+ *         description: Tạo sản phẩm thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Product'
+ *                 message:
+ *                   type: string
+ *                   example: "Tạo sản phẩm thành công"
+ *       400:
+ *         description: Dữ liệu không hợp lệ (thiếu trường bắt buộc, giá/stock âm, ID không hợp lệ, loại sản phẩm/thương hiệu không tồn tại)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Vui lòng cung cấp đủ các trường bắt buộc: tên, thương hiệu (ID), giá, số lượng tồn kho, mẫu mã. or Giá và số lượng tồn kho không được âm. or ID thương hiệu không hợp lệ."
+ *       401:
+ *         description: Không có quyền truy cập (token không hợp lệ/hết hạn)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Token không hợp lệ, không có quyền truy cập"
+ *       403:
+ *         description: Không có quyền tạo sản phẩm (không phải Admin)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Không có quyền tạo sản phẩm"
+ *       500:
+ *         description: Lỗi server
+ */
+
 // @desc    Tạo sản phẩm mới
 // @route   POST /api/products
 // @access  Private/Admin
@@ -43,7 +221,7 @@ const createProduct = asyncHandler(async (req, res) => {
   // Validate required fields
   if (!name || !brand || price === undefined || price === null || stock === undefined || stock === null || !model) {
     res.status(400);
-    throw new new Error('Vui lòng cung cấp đủ các trường bắt buộc: tên, thương hiệu (ID), giá, số lượng tồn kho, mẫu mã.');
+    throw new Error('Vui lòng cung cấp đủ các trường bắt buộc: tên, thương hiệu (ID), giá, số lượng tồn kho, mẫu mã.');
   }
   
   // Validate price and stock are non-negative numbers
@@ -116,6 +294,136 @@ const createProduct = asyncHandler(async (req, res) => {
     message: 'Tạo sản phẩm thành công',
   });
 });
+
+/**
+ * @swagger
+ * /api/products:
+ *   get:
+ *     summary: Lấy tất cả sản phẩm (có phân trang, tìm kiếm và lọc)
+ *     tags: [Products]
+ *     parameters:
+ *       - in: query
+ *         name: keyword
+ *         schema:
+ *           type: string
+ *         description: Từ khóa tìm kiếm theo tên hoặc mẫu mã sản phẩm
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Số trang (mặc định là 1)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Số lượng sản phẩm trên mỗi trang (mặc định là 10)
+ *       - in: query
+ *         name: brand
+ *         schema:
+ *           type: string
+ *         description: Lọc theo ID thương hiệu (có thể truyền nhiều ID cách nhau bằng dấu phẩy)
+ *         example: 60f0a9c1a6b7c3001f123456,60f0a9c1a6b7c3001f123459
+ *       - in: query
+ *         name: categories
+ *         schema:
+ *           type: string
+ *         description: Lọc theo ID loại sản phẩm (có thể truyền nhiều ID cách nhau bằng dấu phẩy)
+ *         example: 60f0a9c1a6b7c3001f123457,60f0a9c1a6b7c3001f123458
+ *       - in: query
+ *         name: minPrice
+ *         schema:
+ *           type: number
+ *           minimum: 0
+ *         description: Lọc theo giá tối thiểu
+ *         example: 500
+ *       - in: query
+ *         name: maxPrice
+ *         schema:
+ *           type: number
+ *           minimum: 0
+ *         description: Lọc theo giá tối đa
+ *         example: 2000
+ *       - in: query
+ *         name: minStock
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *         description: Lọc theo số lượng tồn kho tối thiểu
+ *         example: 5
+ *       - in: query
+ *         name: maxStock
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *         description: Lọc theo số lượng tồn kho tối đa
+ *         example: 50
+ *       - in: query
+ *         name: availabilityType
+ *         schema:
+ *           type: string
+ *           enum: ['in_stock', 'pre_order']
+ *         description: Lọc theo trạng thái có sẵn
+ *         example: in_stock
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *         description: Loại máy ảnh (ví dụ Mirrorless)
+ *         example: Mirrorless
+ *       - in: query
+ *         name: sensorType
+ *         schema:
+ *           type: string
+ *         description: Loại cảm biến (ví dụ Full-Frame CMOS)
+ *         example: Full-Frame CMOS
+ *       - in: query
+ *         name: lensMount
+ *         schema:
+ *           type: string
+ *         description: Loại ngàm ống kính (ví dụ Canon RF)
+ *         example: Canon RF
+ *     responses:
+ *       200:
+ *         description: Danh sách sản phẩm
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Product' # Tham chiếu đến schema Product
+ *                 page:
+ *                   type: integer
+ *                   example: 1
+ *                 pages:
+ *                   type: integer
+ *                   example: 5
+ *                 total:
+ *                   type: integer
+ *                   example: 50
+ *                 message:
+ *                   type: string
+ *                   example: "Lấy danh sách sản phẩm thành công"
+ *       400:
+ *         description: Tham số lọc không hợp lệ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Một hoặc nhiều ID thương hiệu không hợp lệ. or Giá tối thiểu không hợp lệ. or Một hoặc nhiều ID danh mục không hợp lệ."
+ *       500:
+ *         description: Lỗi server
+ */
 
 // @desc    Lấy tất cả sản phẩm (có phân trang, tìm kiếm và lọc)
 // @route   GET /api/products
@@ -255,10 +563,68 @@ const getProducts = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * @swagger
+ * /api/products/{id}:
+ *   get:
+ *     summary: Lấy sản phẩm theo ID
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID của sản phẩm cần lấy
+ *     responses:
+ *       200:
+ *         description: Thông tin sản phẩm
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Product' # Tham chiếu đến schema Product
+ *                 message:
+ *                   type: string
+ *                   example: "Lấy thông tin sản phẩm thành công"
+ *       404:
+ *         description: Không tìm thấy sản phẩm
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Không tìm thấy sản phẩm"
+ *       400:
+ *         description: ID sản phẩm không hợp lệ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "ID sản phẩm không hợp lệ."
+ *       500:
+ *         description: Lỗi server
+ */
+
 // @desc    Lấy sản phẩm theo ID
 // @route   GET /api/products/:id
 // @access  Public
 const getProductById = asyncHandler(async (req, res) => {
+   // Added validation for ObjectId
+   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+       res.status(400);
+       throw new Error('ID sản phẩm không hợp lệ.');
+   }
   const product = await Product.findById(req.params.id).populate('categories', 'name').populate('brand', 'name'); // Lấy tên loại sản phẩm và thương hiệu
 
   if (product) {
@@ -273,10 +639,196 @@ const getProductById = asyncHandler(async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/products/{id}:
+ *   put:
+ *     summary: Cập nhật sản phẩm theo ID (Admin hoặc Manager)
+ *     tags: [Products]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID của sản phẩm cần cập nhật
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Tên sản phẩm
+ *                 example: Camera Canon EOS R6 Mark II
+ *               brand:
+ *                 type: string
+ *                 description: ID của thương hiệu
+ *                 example: 60f0a9c1a6b7c3001f123456
+ *               origin:
+ *                 type: string
+ *                 description: Xuất xứ
+ *                 example: Nhật Bản
+ *               description:
+ *                 type: string
+ *                 description: Mô tả sản phẩm
+ *                 example: Máy ảnh Mirrorless full-frame đa dụng
+ *               price:
+ *                 type: number
+ *                 description: Giá bán (không âm)
+ *                 example: 2499.00
+ *               categories:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Mảng các ID của loại sản phẩm
+ *                 example: ["60f0a9c1a6b7c3001f123457"]
+ *               stock:
+ *                 type: integer
+ *                 description: Số lượng tồn kho (không âm)
+ *                 example: 15
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Danh sách các URL hình ảnh sản phẩm
+ *                 example: ["http://example.com/img3.jpg"]
+ *               model:
+ *                 type: string
+ *                 description: Tên/số hiệu mẫu máy
+ *                 example: EOS R6 Mark II
+ *               type:
+ *                 type: string
+ *                 description: Loại máy ảnh (DSLR, Mirrorless, v.v.)
+ *                 example: Mirrorless
+ *               sensorType:
+ *                 type: string
+ *                 description: Loại cảm biến (Full-Frame CMOS, APS-C CMOS, v.v.)
+ *                 example: Full-Frame CMOS
+ *               megapixels:
+ *                 type: number
+ *                 description: Độ phân giải (Megapixels)
+ *                 example: 24.2
+ *               lensMount:
+ *                 type: string
+ *                 description: Loại ngàm ống kính
+ *                 example: Canon RF
+ *               videoResolution:
+ *                 type: string
+ *                 description: Độ phân giải video tối đa (4K, 8K, v.v.)
+ *                 example: 6K oversampled from 4K
+ *               connectivity:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Kết nối (Wi-Fi, Bluetooth, USB-C, v.v.)
+ *                 example: ["Wi-Fi", "Bluetooth", "USB-C", "HDMI"]
+ *               features:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Các tính năng nổi bật
+ *                 example: ["In-Body Image Stabilization", "High-Speed Continuous Shooting"]
+ *               weight:
+ *                 type: number
+ *                 description: Trọng lượng (gam)
+ *                 example: 670
+ *               dimensions:
+ *                 type: string
+ *                 description: Kích thước (ví dụ RxCxS)
+ *                 example: 132 x 88 x 83.4 mm
+ *               usageInstructions:
+ *                 type: string
+ *                 description: Hướng dẫn sử dụng
+ *               certifications:
+ *                 type: array
+ *                 items: { type: 'string' }
+ *                 description: Chứng nhận (CE, FCC, v.v.)
+ *               warnings:
+ *                 type: string
+ *                 description: Cảnh báo sử dụng
+ *               availabilityType:
+ *                 type: string
+ *                 enum: ['in_stock', 'pre_order']
+ *                 description: Trạng thái có sẵn (in_stock hoặc pre_order)
+ *                 example: in_stock
+ *               preOrderDeliveryTime:
+ *                 type: string
+ *                 description: Thời gian giao hàng dự kiến (nếu là pre_order)
+ *                 example: null
+ *     responses:
+ *       200:
+ *         description: Cập nhật sản phẩm thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Product'
+ *                 message:
+ *                   type: string
+ *                   example: "Cập nhật sản phẩm thành công"
+ *       400:
+ *         description: Dữ liệu không hợp lệ (giá/stock âm, ID không hợp lệ, loại sản phẩm/thương hiệu không tồn tại, Manager cố gắng cập nhật trường không được phép)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Dữ liệu cập nhật không hợp lệ."
+ *       401:
+ *         description: Không có quyền truy cập (token không hợp lệ/hết hạn)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Token không hợp lệ, không có quyền truy cập"
+ *       403:
+ *         description: Không có quyền cập nhật sản phẩm này (quyền không đủ)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Không có quyền cập nhật sản phẩm này"
+ *       404:
+ *         description: Không tìm thấy sản phẩm
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Không tìm thấy sản phẩm"
+ *       500:
+ *         description: Lỗi server
+ */
+
 // @desc    Cập nhật sản phẩm theo ID
 // @route   PUT /api/products/:id
 // @access  Private/Admin hoặc Manager
 const updateProduct = asyncHandler(async (req, res) => {
+   // Added validation for ObjectId
+   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+       res.status(400);
+       throw new Error('ID sản phẩm không hợp lệ.');
+   }
   const product = await Product.findById(req.params.id).populate('categories', 'name').populate('brand', 'name');
 
   if (product) {
@@ -341,7 +893,7 @@ const updateProduct = asyncHandler(async (req, res) => {
         }
         product.categories = categories;
       }
-      
+
       // Validate price and stock if provided and are numbers
       if (price !== undefined && price !== null) {
           if (isNaN(price) || price < 0) {
@@ -382,7 +934,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     } else if (req.user.role === 'manager') {
       // Manager chỉ có thể cập nhật giá và mô tả
       const { price, description } = req.body;
-      
+
       let updatesMade = false;
 
       if (price !== undefined && price !== null) {
@@ -398,7 +950,7 @@ const updateProduct = asyncHandler(async (req, res) => {
           product.description = description;
           updatesMade = true;
       }
-      
+
       // Optional: Throw error if Manager tries to update fields other than price or description
       const allowedManagerFields = ['price', 'description'];
       const receivedFields = Object.keys(req.body);
@@ -430,6 +982,79 @@ const updateProduct = asyncHandler(async (req, res) => {
     throw new Error('Không tìm thấy sản phẩm');
   }
 });
+
+/**
+ * @swagger
+ * /api/products/{id}:
+ *   delete:
+ *     summary: Xóa sản phẩm theo ID (Chỉ Admin)
+ *     tags: [Products]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID của sản phẩm cần xóa
+ *     responses:
+ *       200:
+ *         description: Sản phẩm đã được xóa thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Sản phẩm đã được xóa thành công"
+ *       400:
+ *         description: ID sản phẩm không hợp lệ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "ID sản phẩm không hợp lệ."
+ *       401:
+ *         description: Không có quyền truy cập (token không hợp lệ/hết hạn)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Token không hợp lệ, không có quyền truy cập"
+ *       403:
+ *         description: Không có quyền xóa sản phẩm (không phải Admin)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Không có quyền xóa sản phẩm"
+ *       404:
+ *         description: Không tìm thấy sản phẩm
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Không tìm thấy sản phẩm"
+ *       500:
+ *         description: Lỗi server
+ */
 
 // @desc    Xóa sản phẩm theo ID
 // @route   DELETE /api/products/:id
