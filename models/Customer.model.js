@@ -13,14 +13,12 @@ const CustomerSchema = new Schema({
     accountId:   { type: Schema.Types.ObjectId, ref: 'Auth', required: true, unique: true },
 
     // Thông tin cá nhân
-    firstName:   { type: String, trim: true, required: true },
-    lastName:    { type: String, trim: true, required: true },
+    username:    { type: String, required: true, unique: true },
+    email:       { type: String, required: true, unique: true },
     dateOfBirth: { type: Date },
     gender:      { type: String, enum: ['male', 'female', 'other'] },
     avatarUrl:   { type: String, default: '' },
 
-    // Thông tin liên hệ bổ sung
-    phoneNumber: { type: String, required: true },
     // Địa chỉ lưu dạng mảng string
     addresses:   { type: [String], default: [] },
 
