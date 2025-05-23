@@ -12,6 +12,7 @@ import OrderRoute from './routes/Order.route.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerOptions from './swaggerConfig.js';
+import cors from 'cors';
 
 
 // const { notFound, errorHandler } = require('./middleware/errorMiddleware');
@@ -22,6 +23,7 @@ import swaggerOptions from './swaggerConfig.js';
 dotenv.config();
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 connectDB();
