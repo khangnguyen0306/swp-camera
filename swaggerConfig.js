@@ -15,7 +15,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `http://localhost:${process.env.PORT || 5000}/api`, // Base URL for the API, assuming API routes are prefixed with /api
+        url: `http://localhost:${process.env.PORT || 5000}`, // Base URL for the API, assuming API routes are prefixed with /api
         description: 'Development server',
       },
       {
@@ -85,6 +85,85 @@ const swaggerOptions = {
             preOrderDeliveryTime: { type: 'string' },
           },
         },
+        Order: {
+          type: 'object',
+          required: [
+            'customer',
+            'items',
+            'totalAmount',
+            'customerInfo',
+            'pickupTime'
+          ],
+          properties: {
+            customer: {
+              type: 'string',
+              description: 'ID của khách hàng'
+            },
+            items: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  product: {
+                    type: 'string',
+                    description: 'ID của sản phẩm'
+                  },
+                  quantity: {
+                    type: 'number',
+                    description: 'Số lượng'
+                  },
+                  price: {
+                    type: 'number',
+                    description: 'Giá tại thời điểm đặt hàng'
+                  }
+                }
+              }
+            },
+            totalAmount: {
+              type: 'number',
+              description: 'Tổng tiền đơn hàng'
+            },
+            status: {
+              type: 'string',
+              enum: ['pending', 'confirmed', 'completed', 'cancelled'],
+              default: 'pending',
+              description: 'Trạng thái đơn hàng'
+            },
+            customerInfo: {
+              type: 'object',
+              properties: {
+                fullName: {
+                  type: 'string',
+                  description: 'Họ tên khách hàng'
+                },
+                phone: {
+                  type: 'string',
+                  description: 'Số điện thoại'
+                },
+                email: {
+                  type: 'string',
+                  description: 'Email'
+                }
+              }
+            },
+            pickupTime: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Thời gian nhận hàng'
+            },
+            note: {
+              type: 'string',
+              description: 'Ghi chú'
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time'
+            },
+            updatedAt: {
+              type: 'string'
+            }
+          }
+        }
       },
     },
     security: [

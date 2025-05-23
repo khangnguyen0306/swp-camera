@@ -7,9 +7,13 @@ import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 import ProductTypeRoute from './routes/productType.routes.js';
 import productRoutes from './routes/product.routes.js';
 import brandRoutes from './routes/brand.routes.js';
+import CartRoute from './routes/Cart.route.js';
+import OrderRoute from './routes/Order.route.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerOptions from './swaggerConfig.js';
+
+
 // const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
         // import productRoutes from './routes/productRoutes.js';
@@ -26,6 +30,8 @@ app.use('/api/users', UserRoute);
 app.use('/api/product-types', ProductTypeRoute);
 app.use('/api/products', productRoutes);
 app.use('/api/brands', brandRoutes);
+app.use('/api/cart', CartRoute);
+app.use('/api/orders', OrderRoute);
 
 const specs = swaggerJsdoc(swaggerOptions);
 
