@@ -7,7 +7,7 @@ const AccountSchema = new Schema({
   username: { type: String, required: true, unique: true },
   passwordHash: { type: String, unique: true, required: true },
   email: { type: String, required: true, lowercase: true, trim: true },
-  role: { type: String, enum: ['guest', 'customer', 'seller', 'admin'], required: true, default: 'customer' },
+  role: { type: String, enum: ['guest', 'customer', 'staff', 'admin'], required: true, default: 'customer' },
   isEmailVerified: { type: Boolean, default: false },
   verificationCode: { type: String },
   verificationCodeExpires: { type: Date },
