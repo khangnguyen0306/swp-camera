@@ -4,12 +4,12 @@ import generateToken from '../utils/GenerateToken.js';
 import bcrypt from 'bcryptjs';
 import transporter from '../utils/MailserVices.js';
 
-// @desc    Auth user & get token
+// @desc    Xác thực người dùng và lấy token
 // @route   POST /api/users/login
 // @access  Public
 const authUser = asyncHandler(async (req, res) => {
   const { usernameOrEmail, password } = req.body;
-  // Tìm user theo username hoặc phoneNumber
+  // Tìm người dùng theo username hoặc email
   const user = await Auth.findOne({
     $or: [
       { username: usernameOrEmail },
@@ -17,6 +17,7 @@ const authUser = asyncHandler(async (req, res) => {
     ]
   });
   if (user && (await user.matchPassword(password))) {
+    // Thêm kiểm tra xác thực email
     if (!user.isEmailVerified) {
       res.status(401);
       throw new Error('Email chưa được xác thực. Vui lòng kiểm tra email của bạn.');
@@ -38,7 +39,7 @@ const authUser = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Register new user
+// @desc    Đăng ký người dùng mới
 // @route   POST /api/users
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
@@ -107,7 +108,7 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Forgot password
+// @desc    Quên mật khẩu
 // @route   POST /api/users/forgot-password
 // @access  Public
 const forgotPassword = asyncHandler(async (req, res) => {
@@ -143,7 +144,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Verify code for password reset
+// @desc    Xác thực mã để đặt lại mật khẩu
 // @route   POST /api/users/verify-code
 // @access  Public
 const verifyCode = asyncHandler(async (req, res) => {
@@ -152,13 +153,13 @@ const verifyCode = asyncHandler(async (req, res) => {
 
   if (!user || user.verificationCode !== code || Date.now() > user.verificationCodeExpires) {
     res.status(400);
-    throw new Error('Invalid or expired verification code');
+    throw new Error('Mã xác thực không hợp lệ hoặc đã hết hạn');
   }
 
-  res.status(200).json({ message: 'Verification code is valid' });
+  res.status(200).json({ message: 'Mã xác thực hợp lệ' });
 });
 
-// @desc    Reset password
+// @desc    Đặt lại mật khẩu
 // @route   POST /api/users/reset-password
 // @access  Public
 const resetPassword = asyncHandler(async (req, res) => {
@@ -167,7 +168,7 @@ const resetPassword = asyncHandler(async (req, res) => {
 
   if (!user) {
     res.status(404);
-    throw new Error('User not found');
+    throw new Error('Không tìm thấy người dùng');
   }
 
   // Kiểm tra mã xác thực và thời gian hết hạn
@@ -189,7 +190,7 @@ const resetPassword = asyncHandler(async (req, res) => {
   res.status(200).json({ message: 'Mật khẩu đã được đặt lại thành công' });
 });
 
-// @desc    Change password
+// @desc    Đổi mật khẩu
 // @route   POST /api/users/change-password
 // @access  Private (cần xác thực)
 const changePassword = asyncHandler(async (req, res) => {
@@ -216,7 +217,7 @@ const changePassword = asyncHandler(async (req, res) => {
   res.status(200).json({ message: 'Mật khẩu đã được thay đổi thành công' });
 });
 
-// @desc    Verify user email
+// @desc    Xác thực email người dùng
 // @route   GET /api/users/verify-email/:token
 // @access  Public
 const verifyEmail = asyncHandler(async (req, res) => {

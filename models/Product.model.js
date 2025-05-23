@@ -4,25 +4,32 @@ import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
 const ProductSchema = new Schema({
-    seller:       { type: Schema.Types.ObjectId, ref: 'Seller', required: true }, // Người bán
+    // seller:       { type: Schema.Types.ObjectId, ref: 'Seller', required: true }, // Đã xóa vì đây là cửa hàng đơn lẻ
     name:         { type: String, required: true, trim: true }, // Tên sản phẩm
-    brand:        { type: String, required: true }, // Thương hiệu
-    // origin:       { type: String }, // Xuất xứ
+    brand:        { type: Schema.Types.ObjectId, ref: 'Brand', required: true }, // Thương hiệu, đã cập nhật để tham chiếu đến Brand
+    origin:       { type: String }, // Xuất xứ
     description:  { type: String, default: '' }, // Mô tả sản phẩm
     price:        { type: Number, required: true, min: 0 }, // Giá bán
-    categories:   { type: [String], default: [] }, // Danh mục sản phẩm
+    categories:   [{ type: Schema.Types.ObjectId, ref: 'ProductType' }], // Danh mục sản phẩm, đã cập nhật để tham chiếu đến ProductType
     stock:        { type: Number, default: 0, min: 0 }, // Số lượng tồn kho
     images:       { type: [String], default: [] }, // Danh sách link ảnh sản phẩm
-    volume:       { type: String }, // Dung tích/Khối lượng (ví dụ: 50ml, 100g)
-    ingredients:  { type: [String], default: [] }, // Thành phần
-    skinType:     { type: [String], default: [] }, // Loại da phù hợp
-    expiryDate:   { type: Date }, // Hạn sử dụng
-    manufactureDate: { type: Date }, // Ngày sản xuất
+    
+    // Các trường thông số kỹ thuật camera
+    model:        { type: String, required: true }, // Tên/số hiệu mẫu máy
+    type:         { type: String }, // Loại máy ảnh (DSLR, Mirrorless, Point and Shoot, Action Camera, v.v.)
+    sensorType:   { type: String }, // Loại cảm biến (Full-Frame CMOS, APS-C CMOS, v.v.)
+    megapixels:   { type: Number }, // Độ phân giải (Megapixels)
+    lensMount:    { type: String }, // Loại ngàm ống kính
+    videoResolution: { type: String }, // Độ phân giải video tối đa (4K, 1080p, v.v.)
+    connectivity: { type: [String], default: [] }, // Kết nối (Wi-Fi, Bluetooth, USB-C, HDMI, v.v.)
+    features:     { type: [String], default: [] }, // Các tính năng nổi bật
+    weight:       { type: Number }, // Trọng lượng
+    dimensions:   { type: String }, // Kích thước (ví dụ: DxRxC)
+
     usageInstructions: { type: String }, // Hướng dẫn sử dụng
-    preservation: { type: String }, // Cách bảo quản
-    certifications: { type: [String], default: [] }, // Chứng nhận (FDA, Organic...)
+    certifications: { type: [String], default: [] }, // Chứng nhận (CE, FCC, v.v.)
     warnings:     { type: String }, // Cảnh báo sử dụng
-    isVegan:      { type: Boolean, default: false }, // Có thuần chay không 
+    
     rating:       { type: Number, default: 0, min: 0, max: 5 }, // Điểm đánh giá trung bình
     reviews:      [{ type: Schema.Types.ObjectId, ref: 'Review' }], // Danh sách review
     createdAt:    { type: Date, default: Date.now }, // Thời gian tạo

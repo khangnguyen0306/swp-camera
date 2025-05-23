@@ -4,9 +4,12 @@ import connectDB from './config/db.js';
 import { createDefaultAdmin } from './utils/InitAccount.js';
 import UserRoute from './routes/User.route.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
+import ProductTypeRoute from './routes/productType.routes.js';
+import productRoutes from './routes/product.routes.js';
+import brandRoutes from './routes/brand.routes.js';
 // const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
-// import productRoutes from './routes/productRoutes.js';
+        // import productRoutes from './routes/productRoutes.js';
 // import userRoutes from './routes/userRoutes.js';
 
 dotenv.config();
@@ -17,8 +20,9 @@ app.use(express.json());
 connectDB();
 createDefaultAdmin();
 app.use('/api/users', UserRoute);
-// app.use('/api/products', productRoutes);
-
+app.use('/api/product-types', ProductTypeRoute);
+app.use('/api/products', productRoutes);
+app.use('/api/brands', brandRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
