@@ -18,6 +18,10 @@ const swaggerOptions = {
         url: `http://localhost:${process.env.PORT || 5000}/api`, // Base URL for the API, assuming API routes are prefixed with /api
         description: 'Development server',
       },
+      {
+        url: `${process.env.API_DEPLOY}`, // Địa chỉ deploy
+        description: 'Production server'
+      }
     ],
     components: {
       securitySchemes: {
