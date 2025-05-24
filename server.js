@@ -9,6 +9,7 @@ import productRoutes from './routes/product.routes.js';
 import brandRoutes from './routes/brand.routes.js';
 import CartRoute from './routes/Cart.route.js';
 import OrderRoute from './routes/Order.route.js';
+import PaymentRoute from './routes/Payment.route.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerOptions from './swaggerConfig.js';
@@ -34,6 +35,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/brands', brandRoutes);
 app.use('/api/cart', CartRoute);
 app.use('/api/orders', OrderRoute);
+app.use('/api/payments', PaymentRoute);
 
 const specs = swaggerJsdoc(swaggerOptions);
 
