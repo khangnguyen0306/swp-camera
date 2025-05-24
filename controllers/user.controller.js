@@ -111,7 +111,7 @@ const authUser = asyncHandler(async (req, res) => {
 
 /**
  * @swagger
- * /api/users:
+ * /api/users/register:
  *   post:
  *     summary: Đăng ký người dùng mới
  *     tags: [Users]
@@ -185,7 +185,7 @@ const authUser = asyncHandler(async (req, res) => {
  *                   example: "Error sending verification email"
  */
 // @desc    Đăng ký người dùng mới
-// @route   POST /api/users
+// @route   POST /api/users/register
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
