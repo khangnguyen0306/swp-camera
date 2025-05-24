@@ -12,6 +12,106 @@ import Product from '../models/Product.model.js';
 
 /**
  * @swagger
+ * components:
+ *   schemas:
+ *     OrderItem:
+ *       type: object
+ *       properties:
+ *         product:
+ *           type: string
+ *           description: ID của sản phẩm
+ *         quantity:
+ *           type: number
+ *           description: Số lượng sản phẩm
+ *         price:
+ *           type: number
+ *           description: Giá sản phẩm tại thời điểm đặt hàng
+ *         productName:
+ *           type: string
+ *           description: Tên sản phẩm
+ *     CustomerInfo:
+ *       type: object
+ *       required:
+ *         - username
+ *         - email
+ *       properties:
+ *         username:
+ *           type: string
+ *           description: Tên người đặt hàng
+ *         email:
+ *           type: string
+ *           description: Email người đặt hàng
+ *         phone:
+ *           type: string
+ *           description: Số điện thoại
+ *         address:
+ *           type: string
+ *           description: Địa chỉ giao hàng
+ *     Payment:
+ *       type: object
+ *       properties:
+ *         method:
+ *           type: string
+ *           enum: [cod, payos]
+ *           description: Phương thức thanh toán
+ *         status:
+ *           type: string
+ *           enum: [pending, completed, failed]
+ *           description: Trạng thái thanh toán
+ *         transactionId:
+ *           type: string
+ *           description: ID giao dịch thanh toán
+ *         paymentTime:
+ *           type: string
+ *           format: date-time
+ *           description: Thời gian thanh toán
+ *         paymentDetails:
+ *           type: object
+ *           description: Chi tiết thanh toán
+ *     Order:
+ *       type: object
+ *       required:
+ *         - customer
+ *         - items
+ *         - totalAmount
+ *         - customerInfo
+ *         - pickupTime
+ *       properties:
+ *         customer:
+ *           type: string
+ *           description: ID của khách hàng
+ *         items:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/OrderItem'
+ *         totalAmount:
+ *           type: number
+ *           description: Tổng tiền đơn hàng
+ *         status:
+ *           type: string
+ *           enum: [pending, confirmed, completed, cancelled]
+ *           description: Trạng thái đơn hàng
+ *         customerInfo:
+ *           $ref: '#/components/schemas/CustomerInfo'
+ *         payment:
+ *           $ref: '#/components/schemas/Payment'
+ *         pickupTime:
+ *           type: string
+ *           format: date-time
+ *           description: Thời gian nhận hàng
+ *         note:
+ *           type: string
+ *           description: Ghi chú đơn hàng
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ */
+
+/**
+ * @swagger
  * /api/orders:
  *   post:
  *     summary: Tạo đơn hàng mới từ giỏ hàng
@@ -32,35 +132,15 @@ import Product from '../models/Product.model.js';
  *               customerId:
  *                 type: string
  *                 description: ID của khách hàng
- *                 example: "60f0a9c1a6b7c3001f123456"
  *               customerInfo:
- *                 type: object
- *                 required:
- *                   - fullName
- *                   - phone
- *                   - email
- *                 properties:
- *                   fullName:
- *                     type: string
- *                     description: Họ tên khách hàng
- *                     example: "Nguyễn Văn A"
- *                   phone:
- *                     type: string
- *                     description: Số điện thoại
- *                     example: "0123456789"
- *                   email:
- *                     type: string
- *                     description: Email
- *                     example: "nguyenvana@example.com"
+ *                 $ref: '#/components/schemas/CustomerInfo'
  *               pickupTime:
  *                 type: string
  *                 format: date-time
  *                 description: Thời gian nhận hàng
- *                 example: "2024-03-20T10:00:00Z"
  *               note:
  *                 type: string
  *                 description: Ghi chú đơn hàng
- *                 example: "Giao hàng vào buổi sáng"
  *     responses:
  *       201:
  *         description: Tạo đơn hàng thành công
@@ -71,12 +151,10 @@ import Product from '../models/Product.model.js';
  *               properties:
  *                 success:
  *                   type: boolean
- *                   example: true
  *                 data:
  *                   $ref: '#/components/schemas/Order'
  *                 message:
  *                   type: string
- *                   example: "Tạo đơn hàng thành công"
  *       404:
  *         description: Không tìm thấy giỏ hàng
  *       500:
@@ -94,13 +172,29 @@ export const createOrder = asyncHandler(async (req, res) => {
         throw new Error('Cart not found');
     }
 
-    // Create order items from cart items
-    const orderItems = cart.items.map(item => ({
-        product: item.product,
-        quantity: item.quantity,
-        price: item.price
-    }));
-    console.log(req.body)
+    // Get all product details for cart items
+    const productIds = cart.items.map(item => item.product);
+    const products = await Product.find({ _id: { $in: productIds } });
+
+    // Create a map of product details for quick lookup
+    const productMap = products.reduce((map, product) => {
+        map[product._id.toString()] = product;
+        return map;
+    }, {});
+
+    // Create order items with product details
+    const orderItems = cart.items.map(item => {
+        const product = productMap[item.product.toString()];
+        if (!product) {
+            throw new Error(`Product not found: ${item.product}`);
+        }
+        return {
+            product: item.product,
+            quantity: item.quantity,
+            price: item.price,
+            name: product.name
+        };
+    });
 
     // Create new order
     const order = new Order({
@@ -165,23 +259,18 @@ export const createOrder = asyncHandler(async (req, res) => {
  *               properties:
  *                 success:
  *                   type: boolean
- *                   example: true
  *                 data:
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Order'
  *                 page:
  *                   type: integer
- *                   example: 1
  *                 pages:
  *                   type: integer
- *                   example: 5
  *                 total:
  *                   type: integer
- *                   example: 50
  *                 message:
  *                   type: string
- *                   example: "Lấy danh sách đơn hàng thành công"
  *       401:
  *         description: Không có quyền truy cập
  *       500:
@@ -201,7 +290,10 @@ export const getAllOrders = asyncHandler(async (req, res) => {
     const count = await Order.countDocuments(filter);
     const orders = await Order.find(filter)
         .populate('customer', 'username email')
-        .populate('items.product', 'name price')
+        .populate({
+            path: 'items.product',
+            select: 'name price images'
+        })
         .limit(pageSize)
         .skip(pageSize * (page - 1));
 
@@ -240,14 +332,12 @@ export const getAllOrders = asyncHandler(async (req, res) => {
  *               properties:
  *                 success:
  *                   type: boolean
- *                   example: true
  *                 data:
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Order'
  *                 message:
  *                   type: string
- *                   example: "Lấy danh sách đơn hàng thành công"
  *       500:
  *         description: Lỗi server
  */
@@ -255,7 +345,10 @@ export const getAllOrders = asyncHandler(async (req, res) => {
 // Get customer's orders
 export const getCustomerOrders = asyncHandler(async (req, res) => {
     const orders = await Order.find({ customer: req.params.customerId })
-        .populate('items.product', 'name price');
+        .populate({
+            path: 'items.product',
+            select: 'name price images'
+        });
     
     res.json({
         success: true,
@@ -289,12 +382,10 @@ export const getCustomerOrders = asyncHandler(async (req, res) => {
  *               properties:
  *                 success:
  *                   type: boolean
- *                   example: true
  *                 data:
  *                   $ref: '#/components/schemas/Order'
  *                 message:
  *                   type: string
- *                   example: "Lấy chi tiết đơn hàng thành công"
  *       404:
  *         description: Không tìm thấy đơn hàng
  *       500:
@@ -305,7 +396,10 @@ export const getCustomerOrders = asyncHandler(async (req, res) => {
 export const getOrderById = asyncHandler(async (req, res) => {
     const order = await Order.findById(req.params.id)
         .populate('customer', 'username email')
-        .populate('items.product', 'name price');
+        .populate({
+            path: 'items.product',
+            select: 'name price images'
+        });
     
     if (!order) {
         res.status(404);
@@ -347,7 +441,6 @@ export const getOrderById = asyncHandler(async (req, res) => {
  *                 type: string
  *                 enum: [pending, confirmed, completed, cancelled]
  *                 description: Trạng thái mới của đơn hàng
- *                 example: "confirmed"
  *     responses:
  *       200:
  *         description: Cập nhật trạng thái thành công
@@ -358,12 +451,10 @@ export const getOrderById = asyncHandler(async (req, res) => {
  *               properties:
  *                 success:
  *                   type: boolean
- *                   example: true
  *                 data:
  *                   $ref: '#/components/schemas/Order'
  *                 message:
  *                   type: string
- *                   example: "Cập nhật trạng thái đơn hàng thành công"
  *       404:
  *         description: Không tìm thấy đơn hàng
  *       500:
@@ -415,12 +506,10 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
  *               properties:
  *                 success:
  *                   type: boolean
- *                   example: true
  *                 data:
  *                   $ref: '#/components/schemas/Order'
  *                 message:
  *                   type: string
- *                   example: "Hủy đơn hàng thành công"
  *       400:
  *         description: Không thể hủy đơn hàng đã hoàn thành
  *       404:

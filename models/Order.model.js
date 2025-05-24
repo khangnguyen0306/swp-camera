@@ -15,13 +15,17 @@ const OrderItemSchema = new Schema({
     price: {
         type: Number,
         required: true
+    },
+    name: {
+        type: String,
+        required: true
     }
 }, { _id: false });
 
 const PaymentSchema = new Schema({
     method: {
         type: String,
-        enum: ['cod', 'vnpay'],
+        enum: ['cod', 'payos'],
         default: 'cod'
     },
     status: {
