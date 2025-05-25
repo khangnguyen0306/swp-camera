@@ -1,8 +1,9 @@
-import asyncHandler from 'express-async-handler';
-import Auth from '../models/Auth.model.js';
-import generateToken from '../utils/GenerateToken.js';
-import bcrypt from 'bcryptjs';
-import transporter from '../utils/MailserVices.js';
+import asyncHandler from "express-async-handler";
+import Auth from "../models/Auth.model.js";
+import generateToken from "../utils/GenerateToken.js";
+import bcrypt from "bcryptjs";
+import transporter from "../utils/MailserVices.js";
+import { protect, admin } from "../middleware/authMiddleware.js";
 
 /**
  * @swagger
@@ -80,16 +81,13 @@ const authUser = asyncHandler(async (req, res) => {
   const { usernameOrEmail, password } = req.body;
   // Tìm người dùng theo username hoặc email
   const user = await Auth.findOne({
-    $or: [
-      { username: usernameOrEmail },
-      { email: usernameOrEmail }
-    ]
+    $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }]
   });
   if (user && (await user.matchPassword(password))) {
     // Thêm kiểm tra xác thực email
     if (!user.isEmailVerified) {
       res.status(401);
-      throw new Error('Email chưa được xác thực. Vui lòng kiểm tra email của bạn.');
+      throw new Error("Email chưa được xác thực. Vui lòng kiểm tra email của bạn.");
     }
     res.json({
       success: true,
@@ -99,13 +97,13 @@ const authUser = asyncHandler(async (req, res) => {
         email: user.email,
         role: user.role,
         isEmailVerified: user.isEmailVerified,
-        token: generateToken(user._id),
+        token: generateToken(user._id)
       },
-      message: 'Đăng nhập thành công'
+      message: "Đăng nhập thành công"
     });
   } else {
     res.status(401);
-    throw new Error('Sai tài khoản hoặc mật khẩu vui lòng thử lại !');
+    throw new Error("Sai tài khoản hoặc mật khẩu vui lòng thử lại !");
   }
 });
 
@@ -190,14 +188,11 @@ const authUser = asyncHandler(async (req, res) => {
 const registerUser = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
   const userExists = await Auth.findOne({
-    $or: [
-      { username },
-      { email }
-    ]
+    $or: [{ username }, { email }]
   });
   if (userExists) {
     res.status(400);
-    throw new Error('Tài khoản đã tồn tại');
+    throw new Error("Tài khoản đã tồn tại");
   }
 
   // Tạo token xác thực email
@@ -208,9 +203,9 @@ const registerUser = asyncHandler(async (req, res) => {
     username,
     email,
     passwordHash: password,
-    isEmailVerified: false, 
+    isEmailVerified: false,
     emailVerificationToken,
-    emailVerificationExpires,
+    emailVerificationExpires
   });
 
   if (user) {
@@ -219,19 +214,18 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const mailOptions = {
       to: email,
-      subject: 'Xác thực địa chỉ email của bạn',
-      text: `Chào ${username},\n\nVui lòng xác thực địa chỉ email của bạn bằng cách nhấp vào liên kết này:\n${verificationUrl}\n\n` +
-        `Liên kết này sẽ hết hạn sau 1 giờ.`,
+      subject: "Xác thực địa chỉ email của bạn",
+      text: `Chào ${username},\n\nVui lòng xác thực địa chỉ email của bạn bằng cách nhấp vào liên kết này:\n${verificationUrl}\n\n` + `Liên kết này sẽ hết hạn sau 1 giờ.`,
       html: `<p>Chào ${username},</p><p>Vui lòng xác thực địa chỉ email của bạn bằng cách nhấp vào liên kết này:</p><p><a href="${verificationUrl}">Xác thực Email</a></p><p>Liên kết này sẽ hết hạn sau 1 giờ.</p>`
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.error("Lỗi gửi email xác thực:", error); // Log lỗi gửi email
-        // Tuy nhiên, vẫn tiếp tục đăng ký người dùng thành công ở đây, 
+        // Tuy nhiên, vẫn tiếp tục đăng ký người dùng thành công ở đây,
         // có thể thêm logic để thử gửi lại email sau nếu cần.
       } else {
-        console.log('Email xác thực đã gửi:', info.response);
+        console.log("Email xác thực đã gửi:", info.response);
       }
     });
 
@@ -243,13 +237,13 @@ const registerUser = asyncHandler(async (req, res) => {
         email: user.email,
         role: user.role,
         isEmailVerified: user.isEmailVerified, // Vẫn trả về false
-        token: generateToken(user._id),
+        token: generateToken(user._id)
       },
-      message: 'Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.'
+      message: "Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản."
     });
   } else {
     res.status(400);
-    throw new Error('Dữ liệu tài khoản không hợp lệ');
+    throw new Error("Dữ liệu tài khoản không hợp lệ");
   }
 });
 
@@ -312,7 +306,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
   if (!user) {
     res.status(404);
-    throw new Error('Không tìm thấy tài khoản');
+    throw new Error("Không tìm thấy tài khoản");
   }
 
   // Tạo mã xác thực 6 số ngẫu nhiên
@@ -323,19 +317,17 @@ const forgotPassword = asyncHandler(async (req, res) => {
   user.verificationCodeExpires = Date.now() + 120000; // 2 phút
   await user.save();
 
-
   const mailOptions = {
     to: email,
-    subject: 'Mã xác thực đặt lại mật khẩu',
-    text: `Mã xác thực của bạn là: ${verificationCode}\n\n` +
-      `Mã này sẽ hết hạn trong 1 phút. Vui lòng sử dụng nó để đặt lại mật khẩu của bạn.`,
+    subject: "Mã xác thực đặt lại mật khẩu",
+    text: `Mã xác thực của bạn là: ${verificationCode}\n\n` + `Mã này sẽ hết hạn trong 1 phút. Vui lòng sử dụng nó để đặt lại mật khẩu của bạn.`
   };
 
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
       return res.status(500).send(error.toString());
     }
-    res.status(200).json({ message: 'Mã xác thực đã được gửi đến email của bạn' });
+    res.status(200).json({ message: "Mã xác thực đã được gửi đến email của bạn" });
   });
 });
 
@@ -392,10 +384,10 @@ const verifyCode = asyncHandler(async (req, res) => {
 
   if (!user || user.verificationCode !== code || Date.now() > user.verificationCodeExpires) {
     res.status(400);
-    throw new Error('Mã xác thực không hợp lệ hoặc đã hết hạn');
+    throw new Error("Mã xác thực không hợp lệ hoặc đã hết hạn");
   }
 
-  res.status(200).json({ message: 'Mã xác thực hợp lệ' });
+  res.status(200).json({ message: "Mã xác thực hợp lệ" });
 });
 
 /**
@@ -465,13 +457,13 @@ const resetPassword = asyncHandler(async (req, res) => {
 
   if (!user) {
     res.status(404);
-    throw new Error('Không tìm thấy người dùng');
+    throw new Error("Không tìm thấy người dùng");
   }
 
   // Kiểm tra mã xác thực và thời gian hết hạn
   if (user.verificationCode !== verificationCode || Date.now() > user.verificationCodeExpires) {
     res.status(400);
-    throw new Error('Mã xác thực không hợp lệ hoặc đã hết hạn');
+    throw new Error("Mã xác thực không hợp lệ hoặc đã hết hạn");
   }
 
   // Hash mật khẩu mới
@@ -484,7 +476,7 @@ const resetPassword = asyncHandler(async (req, res) => {
 
   await user.save();
 
-  res.status(200).json({ message: 'Mật khẩu đã được đặt lại thành công' });
+  res.status(200).json({ message: "Mật khẩu đã được đặt lại thành công" });
 });
 
 /**
@@ -566,13 +558,13 @@ const changePassword = asyncHandler(async (req, res) => {
 
   if (!user) {
     res.status(404);
-    throw new Error('Không tìm thấy tài khoản');
+    throw new Error("Không tìm thấy tài khoản");
   }
 
   // Kiểm tra mật khẩu cũ
   if (!(await user.matchPassword(oldPassword))) {
     res.status(401);
-    throw new Error('Mật khẩu cũ không hợp lệ');
+    throw new Error("Mật khẩu cũ không hợp lệ");
   }
 
   // Hash mật khẩu mới
@@ -581,7 +573,7 @@ const changePassword = asyncHandler(async (req, res) => {
 
   await user.save();
 
-  res.status(200).json({ message: 'Mật khẩu đã được thay đổi thành công' });
+  res.status(200).json({ message: "Mật khẩu đã được thay đổi thành công" });
 });
 
 /**
@@ -627,12 +619,12 @@ const verifyEmail = asyncHandler(async (req, res) => {
 
   const user = await Auth.findOne({
     emailVerificationToken: token,
-    emailVerificationExpires: { $gt: Date.now() }, 
+    emailVerificationExpires: { $gt: Date.now() }
   });
 
   if (!user) {
     res.status(400);
-    throw new Error('Token xác thực không hợp lệ hoặc đã hết hạn');
+    throw new Error("Token xác thực không hợp lệ hoặc đã hết hạn");
   }
 
   // Cập nhật trạng thái xác thực và xóa token
@@ -642,9 +634,114 @@ const verifyEmail = asyncHandler(async (req, res) => {
 
   await user.save();
 
-  res.status(200).json({ message: 'Email của bạn đã được xác thực thành công!' });
+  res.status(200).json({ message: "Email của bạn đã được xác thực thành công!" });
 });
 
-export { authUser, registerUser, forgotPassword, verifyCode, resetPassword, changePassword, verifyEmail };
+/**
+ * @swagger
+ * /api/users/update-profile:
+ *   put:
+ *     summary: Cập nhật thông tin người dùng
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 example: newUsername
+ *               phone:
+ *                 type: string
+ *                 example: "0123456789"
+ *               firstName:
+ *                 type: string
+ *                 example: "Nguyen"
+ *               lastName:
+ *                 type: string
+ *                 example: "Van A"
+ *               address:
+ *                 type: string
+ *                 example: "123 Đường ABC, Quận 1, TP.HCM"
+ *     responses:
+ *       200:
+ *         description: Cập nhật thông tin thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     username:
+ *                       type: string
+ *                       example: "newUsername"
+ *                     phone:
+ *                       type: string
+ *                       example: "0123456789"
+ *                     firstName:
+ *                       type: string
+ *                       example: "Nguyen"
+ *                     lastName:
+ *                       type: string
+ *                       example: "Van A"
+ *                     address:
+ *                       type: string
+ *                       example: "123 Đường ABC, Quận 1, TP.HCM"
+ *                 message:
+ *                   type: string
+ *                   example: "Cập nhật thông tin thành công"
+ *       404:
+ *         description: Không tìm thấy người dùng
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Không tìm thấy người dùng"
+ */
+const updateProfile = asyncHandler(async (req, res) => {
+  const { username } = req.body;
 
+  const user = await Auth.findById(req.user._id);
+  console.log("user", user);
 
+  if (!user) {
+    res.status(404);
+    throw new Error("Không tìm thấy người dùng");
+  }
+
+  // Cập nhật thông tin người dùng
+  user.username = username || user.username;
+  user.phone = req.body.phone || user.phone;
+  user.firstName = req.body.firstName || user.firstName;
+  user.lastName = req.body.lastName || user.lastName;
+  user.address = req.body.address || user.address;
+
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    data: {
+      username: user.username,
+      email: user.email,
+      phone: user.phone,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      address: user.address
+    },
+    message: "Cập nhật thông tin thành công"
+  });
+});
+
+export { authUser, registerUser, forgotPassword, verifyCode, resetPassword, changePassword, verifyEmail, updateProfile };
