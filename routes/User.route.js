@@ -1,13 +1,15 @@
-import express from 'express';
-import { authUser, registerUser, forgotPassword, verifyCode, resetPassword, changePassword } from '../controllers/user.controller.js';
+import express from "express";
+import { authUser, registerUser, forgotPassword, verifyCode, resetPassword, changePassword, updateProfile } from "../controllers/user.controller.js";
+import { protect, admin } from "../middleware/authMiddleware.js";
 
 const UserRoute = express.Router();
 
-UserRoute.post('/login', authUser);
-UserRoute.post('/register', registerUser);
-UserRoute.post('/forgot-password', forgotPassword);
-UserRoute.post('/verify-code', verifyCode);
-UserRoute.post('/reset-password', resetPassword);
-UserRoute.post('/change-password', changePassword);
+UserRoute.post("/login", authUser);
+UserRoute.post("/register", registerUser);
+UserRoute.post("/forgot-password", forgotPassword);
+UserRoute.post("/verify-code", verifyCode);
+UserRoute.post("/reset-password", resetPassword);
+UserRoute.post("/change-password", changePassword);
+UserRoute.put("/update-profile", protect, updateProfile);
 
-export default UserRoute; 
+export default UserRoute;
