@@ -1,5 +1,5 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 const { Schema } = mongoose;
 
@@ -7,7 +7,11 @@ const AccountSchema = new Schema({
   username: { type: String, required: true, unique: true },
   passwordHash: { type: String, unique: true, required: true },
   email: { type: String, required: true, lowercase: true, trim: true },
-  role: { type: String, enum: ['guest', 'customer', 'staff', 'manager', 'admin'], required: true, default: 'customer' },
+  phone: { type: String, unique: true, sparse: true },
+  firstName: { type: String, required: true, trim: true },
+  lastName: { type: String, required: true, trim: true },
+  address: { type: String, trim: true },
+  role: { type: String, enum: ["guest", "customer", "staff", "manager", "admin"], required: true, default: "customer" },
   isEmailVerified: { type: Boolean, default: false },
   verificationCode: { type: String },
   verificationCodeExpires: { type: Date },
@@ -18,11 +22,11 @@ const AccountSchema = new Schema({
 });
 
 // Gộp pre-save hook
-AccountSchema.pre('save', async function (next) {
+AccountSchema.pre("save", async function (next) {
   this.updatedAt = Date.now();
 
   // Chỉ hash password nếu passwordHash bị thay đổi
-  if (this.isModified('passwordHash')) {
+  if (this.isModified("passwordHash")) {
     const salt = await bcrypt.genSalt(10);
     this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
   }
@@ -33,6 +37,6 @@ AccountSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.passwordHash);
 };
 
-const Auth = mongoose.model('Auth', AccountSchema);
+const Auth = mongoose.model("Auth", AccountSchema);
 
-export default Auth
+export default Auth;
