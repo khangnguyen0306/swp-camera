@@ -13,6 +13,7 @@ import PaymentRoute from './routes/Payment.route.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerOptions from './swaggerConfig.js';
+import ConsultationRoute from './routes/consultation.routes.js';
 import cors from 'cors';
 
 
@@ -36,6 +37,7 @@ app.use('/api/brands', brandRoutes);
 app.use('/api/cart', CartRoute);
 app.use('/api/orders', OrderRoute);
 app.use('/api/payments', PaymentRoute);
+app.use('/api/consultations', ConsultationRoute);
 
 const specs = swaggerJsdoc(swaggerOptions);
 
