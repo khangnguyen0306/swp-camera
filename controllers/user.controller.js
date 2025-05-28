@@ -197,7 +197,6 @@ const registerUser = asyncHandler(async (req, res) => {
 
   // Tạo token xác thực email
   const emailVerificationToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
-  const emailVerificationExpires = Date.now() + 3600000; // Token hết hạn sau 1 giờ
 
   const user = await Auth.create({
     username,
@@ -206,8 +205,7 @@ const registerUser = asyncHandler(async (req, res) => {
     firstName,
     lastName,
     isEmailVerified: false,
-    emailVerificationToken,
-    emailVerificationExpires
+    emailVerificationToken
   });
 
   if (user) {
@@ -603,7 +601,7 @@ const changePassword = asyncHandler(async (req, res) => {
  *                   type: string
  *                   example: "Email của bạn đã được xác thực thành công!"
  *       400:
- *         description: Token xác thực không hợp lệ hoặc đã hết hạn
+ *         description: Token xác thực không hợp lệ
  *         content:
  *           application/json:
  *             schema:
@@ -611,7 +609,7 @@ const changePassword = asyncHandler(async (req, res) => {
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Token xác thực không hợp lệ hoặc đã hết hạn"
+ *                   example: "Token xác thực không hợp lệ"
  */
 // @desc    Xác thực email người dùng
 // @route   GET /api/users/verify-email/:token
@@ -620,19 +618,25 @@ const verifyEmail = asyncHandler(async (req, res) => {
   const { token } = req.params;
 
   const user = await Auth.findOne({
-    emailVerificationToken: token,
-    emailVerificationExpires: { $gt: Date.now() }
+    emailVerificationToken: token
   });
 
   if (!user) {
     res.status(400);
-    throw new Error("Token xác thực không hợp lệ hoặc đã hết hạn");
+    throw new Error("Token xác thực không hợp lệ");
+  }
+
+  if (user.isEmailVerified) {
+    return res.status(409).json({
+      success: false,
+      errorCode: "EMAIL_ALREADY_VERIFIED",
+      message: "Email đã được xác thực trước đó. Không thể xác thực lại."
+    });
   }
 
   // Cập nhật trạng thái xác thực và xóa token
   user.isEmailVerified = true;
   user.emailVerificationToken = undefined;
-  user.emailVerificationExpires = undefined;
 
   await user.save();
 
