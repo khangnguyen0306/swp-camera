@@ -16,7 +16,6 @@ const AccountSchema = new Schema({
   verificationCode: { type: String },
   verificationCodeExpires: { type: Date },
   emailVerificationToken: { type: String },
-  emailVerificationExpires: { type: Date },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
