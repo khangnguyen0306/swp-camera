@@ -70,7 +70,10 @@ import asyncHandler from 'express-async-handler';
 // @access  Private
 const getCart = asyncHandler(async (req, res) => {
     const cart = await Cart.findOne({ customer: req.user._id })
-        .populate('items.product', 'name price images stock');
+        .populate({
+            path: 'items.product',
+            select: 'name price images stock description category brand origin model type sensorType megapixels lensMount videoResolution connectivity features weight dimensions usageInstructions certifications warnings rating reviews availabilityType preOrderDeliveryTime,'
+        });
 
     if (!cart) {
         return res.status(200).json({ items: [], totalPrice: 0, totalItems: 0 });
