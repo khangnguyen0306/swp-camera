@@ -44,6 +44,7 @@ const OrderSchema = new Schema({
         ref: 'Auth', 
         required: true 
     },
+    combo: { type: Schema.Types.ObjectId, ref: 'Combo' },
     items: [OrderItemSchema],
     totalAmount: {
         type: Number,

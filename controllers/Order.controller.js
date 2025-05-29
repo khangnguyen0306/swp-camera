@@ -2,6 +2,7 @@ import asyncHandler from 'express-async-handler';
 import Order from '../models/Order.model.js';
 import Cart from '../models/Cart.model.js';
 import Product from '../models/Product.model.js';
+import Combo from '../models/Combo.model.js';
 
 /**
  * @swagger
@@ -114,7 +115,7 @@ import Product from '../models/Product.model.js';
  * @swagger
  * /api/orders:
  *   post:
- *     summary: Tạo đơn hàng mới từ giỏ hàng
+ *     summary: Tạo đơn hàng mới từ giỏ hàng hoặc mua combo
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
@@ -141,6 +142,9 @@ import Product from '../models/Product.model.js';
  *               note:
  *                 type: string
  *                 description: Ghi chú đơn hàng
+ *               comboId:
+ *                 type: string
+ *                 description: ID của combo (nếu mua combo, nếu không thì tạo từ cart)
  *     responses:
  *       201:
  *         description: Tạo đơn hàng thành công
@@ -156,15 +160,54 @@ import Product from '../models/Product.model.js';
  *                 message:
  *                   type: string
  *       404:
- *         description: Không tìm thấy giỏ hàng
+ *         description: Không tìm thấy giỏ hàng hoặc combo
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
  *       500:
  *         description: Lỗi server
  */
 
-// Create new order from cart
+// Create new order from cart or combo
 export const createOrder = asyncHandler(async (req, res) => {
-    const { customerId, pickupTime, note } = req.body;
-    
+    const { customerId, pickupTime, note, comboId, customerInfo } = req.body;
+
+    if (comboId) {
+        // Đặt hàng combo
+        const combo = await Combo.findById(comboId).populate('products');
+        if (!combo) {
+            return res.status(404).json({ success: false, message: 'Combo không tồn tại' });
+        }
+        // Tạo order items từ các sản phẩm trong combo
+        const orderItems = combo.products.map(product => ({
+            product: product._id,
+            quantity: 1,
+            price: product.price,
+            name: product.name
+        }));
+        const order = new Order({
+            customer: customerId,
+            combo: comboId,
+            items: orderItems,
+            totalAmount: combo.price,
+            customerInfo,
+            pickupTime,
+            note
+        });
+        const savedOrder = await order.save();
+        return res.status(201).json({
+            success: true,
+            data: savedOrder,
+            message: 'Tạo đơn hàng combo thành công'
+        });
+    }
+
     // Get customer's cart
     const cart = await Cart.findOne({ customer: customerId });
     if (!cart) {
