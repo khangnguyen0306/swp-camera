@@ -72,7 +72,7 @@ const getCart = asyncHandler(async (req, res) => {
     const cart = await Cart.findOne({ customer: req.user._id })
         .populate({
             path: 'items.product',
-            select: 'name price images stock description category brand origin model type sensorType megapixels lensMount videoResolution connectivity features weight dimensions usageInstructions certifications warnings rating reviews availabilityType preOrderDeliveryTime,'
+            select: 'name price images stock description category brand origin model type sensorType megapixels lensMount videoResolution connectivity features weight dimensions usageInstructions certifications warnings rating reviews availabilityType preOrderDeliveryTime'
         });
 
     if (!cart) {
