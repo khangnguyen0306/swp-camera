@@ -3,6 +3,7 @@ import Product from '../models/Product.model.js';
 import ProductType from '../models/ProductType.model.js'; // Import model Loại sản phẩm
 import Brand from '../models/Brand.model.js'; // Import model Thương hiệu
 import mongoose from 'mongoose'; // Import mongoose để kiểm tra ObjectId
+import Combo from '../models/Combo.model.js';
 
 /**
  * @swagger
@@ -1069,6 +1070,15 @@ const deleteProduct = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
 
   if (product) {
+    // Kiểm tra sản phẩm có nằm trong combo nào không
+    const combos = await Combo.find({ products: product._id });
+    if (combos.length > 0) {
+      const comboNames = combos.map(c => c.name).join(', ');
+      return res.status(400).json({
+        success: false,
+        message: `Sản phẩm đang nằm trong combo: ${comboNames}. Vui lòng xóa hoặc sửa combo trước khi xóa sản phẩm.`
+      });
+    }
     await product.deleteOne();
     res.json({
       success: true,
