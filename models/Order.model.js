@@ -39,6 +39,11 @@ const PaymentSchema = new Schema({
 }, { _id: false });
 
 const OrderSchema = new Schema({
+    orderCode: {
+        type: Number,
+        required: true,
+        unique: true
+    },
     customer: { 
         type: Schema.Types.ObjectId, 
         ref: 'Auth', 
@@ -52,7 +57,7 @@ const OrderSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ['pending', 'confirmed', 'completed', 'cancelled'],
+        enum: ['pending', 'processing', 'accepted', 'deliverying', 'completed', 'cancelled'],
         default: 'pending'
     },
     customerInfo: {

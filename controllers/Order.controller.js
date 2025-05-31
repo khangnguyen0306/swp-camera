@@ -178,6 +178,9 @@ import Combo from '../models/Combo.model.js';
 export const createOrder = asyncHandler(async (req, res) => {
     const { customerId, pickupTime, note, comboId, customerInfo } = req.body;
 
+    // Generate short orderCode (format: random 8 digits)
+    const orderCode = Math.floor(10000000 + Math.random() * 90000000);
+
     if (comboId) {
         // Đặt hàng combo
         const combo = await Combo.findById(comboId).populate('products');
@@ -192,6 +195,7 @@ export const createOrder = asyncHandler(async (req, res) => {
             name: product.name
         }));
         const order = new Order({
+            orderCode,
             customer: customerId,
             combo: comboId,
             items: orderItems,
@@ -241,6 +245,7 @@ export const createOrder = asyncHandler(async (req, res) => {
 
     // Create new order
     const order = new Order({
+        orderCode,
         customer: customerId,
         items: orderItems,
         totalAmount: cart.totalPrice,
@@ -482,7 +487,7 @@ export const getOrderById = asyncHandler(async (req, res) => {
  *             properties:
  *               status:
  *                 type: string
- *                 enum: [pending, confirmed, completed, cancelled]
+ *                 enum: [pending, processing, accepted, deliverying, completed, cancelled]
  *                 description: Trạng thái mới của đơn hàng
  *     responses:
  *       200:
@@ -504,7 +509,7 @@ export const getOrderById = asyncHandler(async (req, res) => {
  *         description: Lỗi server
  */
 
-// Update order status
+// Update order status (Admin)
 export const updateOrderStatus = asyncHandler(async (req, res) => {
     const { status } = req.body;
     const order = await Order.findById(req.params.id);
@@ -514,6 +519,21 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
         throw new Error('Không tìm thấy đơn hàng');
     }
 
+    // Validate status transition
+    const validTransitions = {
+        'pending': ['processing', 'cancelled'],
+        'processing': ['accepted', 'cancelled'],
+        'accepted': ['deliverying', 'cancelled'],
+        'deliverying': ['completed', 'cancelled'],
+        'completed': [],
+        'cancelled': []
+    };
+
+    if (!validTransitions[order.status].includes(status)) {
+        res.status(400);
+        throw new Error(`Không thể chuyển trạng thái từ ${order.status} sang ${status}`);
+    }
+
     order.status = status;
     const updatedOrder = await order.save();
     
@@ -521,6 +541,86 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
         success: true,
         data: updatedOrder,
         message: 'Cập nhật trạng thái đơn hàng thành công'
+    });
+});
+
+/**
+ * @swagger
+ * /api/orders/status/{status}:
+ *   get:
+ *     summary: Lấy danh sách đơn hàng theo trạng thái (Admin)
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: status
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [pending, processing, accepted, deliverying, completed, cancelled]
+ *         description: Trạng thái đơn hàng cần lấy
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Số trang (mặc định là 1)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Số lượng đơn hàng trên mỗi trang (mặc định là 10)
+ *     responses:
+ *       200:
+ *         description: Danh sách đơn hàng theo trạng thái
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Order'
+ *                 page:
+ *                   type: integer
+ *                 pages:
+ *                   type: integer
+ *                 total:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Lỗi server
+ */
+
+// Get orders by status (Admin)
+export const getOrdersByStatus = asyncHandler(async (req, res) => {
+    const { status } = req.params;
+    const pageSize = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 1;
+
+    const count = await Order.countDocuments({ status });
+    const orders = await Order.find({ status })
+        .populate('customer', 'username email')
+        .populate({
+            path: 'items.product',
+            select: 'name price images'
+        })
+        .limit(pageSize)
+        .skip(pageSize * (page - 1));
+
+    res.json({
+        success: true,
+        data: orders,
+        page,
+        pages: Math.ceil(count / pageSize),
+        total: count,
+        message: 'Lấy danh sách đơn hàng thành công'
     });
 });
 

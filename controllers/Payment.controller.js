@@ -93,9 +93,9 @@ export const createPayOSPayment = asyncHandler(async (req, res) => {
 
     // Create payment data for PayOS
     const body = {
-        orderCode: parseInt(orderId.slice(-8), 16), // Convert last 8 chars of orderId to number
+        orderCode: order.orderCode,
         amount: Math.round(order.totalAmount),
-        description: `Thanh toan don ${orderId.slice(-4)}`, // Use last 4 chars of orderId
+        description: `Don ${order.orderCode}`,
         items: order.items.map(item => ({
             name: item.name,
             quantity: item.quantity,
@@ -230,8 +230,8 @@ export const handlePayOSWebhook = asyncHandler(async (req, res) => {
             throw new Error('Invalid webhook data');
         }
 
-        // Find and update order
-        const order = await Order.findById(webhookData.orderCode);
+        // Find and update order by orderCode
+        const order = await Order.findOne({ orderCode: webhookData.orderCode });
         if (!order) {
             res.status(404);
             throw new Error('Order not found');
@@ -244,7 +244,7 @@ export const handlePayOSWebhook = asyncHandler(async (req, res) => {
 
         // Update order status if payment is successful
         if (webhookData.code === '00') {
-            order.status = 'confirmed';
+            order.status = 'processing';
         }
 
         await order.save();
