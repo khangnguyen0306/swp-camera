@@ -34,6 +34,10 @@ import mongoose from 'mongoose'; // Import mongoose for ObjectId validation
  *                 type: string
  *                 description: Mô tả thương hiệu
  *                 example: Thương hiệu máy ảnh nổi tiếng từ Nhật Bản
+ *               image:
+ *                 type: string
+ *                 description: URL hoặc đường dẫn ảnh thương hiệu
+ *                 example: https://example.com/brand-logo.png
  *     responses:
  *       201:
  *         description: Tạo thương hiệu thành công
@@ -46,7 +50,7 @@ import mongoose from 'mongoose'; // Import mongoose for ObjectId validation
  *                   type: boolean
  *                   example: true
  *                 data:
- *                   $ref: '#/components/schemas/Brand' # Tham chiếu đến schema Brand
+ *                   $ref: '#/components/schemas/Brand'
  *                 message:
  *                   type: string
  *                   example: "Tạo thương hiệu thành công"
@@ -86,7 +90,7 @@ import mongoose from 'mongoose'; // Import mongoose for ObjectId validation
 // @route   POST /api/brands
 // @access  Private/Admin
 const createBrand = asyncHandler(async (req, res) => {
-  const { name, description } = req.body;
+  const { name, description, image } = req.body;
 
   const brandExists = await Brand.findOne({ name });
 
@@ -98,6 +102,7 @@ const createBrand = asyncHandler(async (req, res) => {
   const brand = await Brand.create({
     name,
     description,
+    image,
   });
 
   if (brand) {
@@ -256,6 +261,10 @@ const getBrandById = asyncHandler(async (req, res) => {
  *                 type: string
  *                 description: Mô tả thương hiệu
  *                 example: Thương hiệu điện tử và máy ảnh nổi tiếng
+ *               image:
+ *                 type: string
+ *                 description: URL hoặc đường dẫn ảnh thương hiệu
+ *                 example: https://example.com/brand-logo.png
  *     responses:
  *       200:
  *         description: Cập nhật thương hiệu thành công
@@ -323,7 +332,7 @@ const updateBrand = asyncHandler(async (req, res) => {
        res.status(400);
        throw new Error('ID thương hiệu không hợp lệ.');
    }
-  const { name, description } = req.body;
+  const { name, description, image } = req.body;
 
   const brand = await Brand.findById(req.params.id);
 
@@ -339,6 +348,7 @@ const updateBrand = asyncHandler(async (req, res) => {
 
     brand.name = name !== undefined ? name : brand.name;
     brand.description = description !== undefined ? description : brand.description;
+    brand.image = image !== undefined ? image : brand.image;
 
     const updatedBrand = await brand.save();
     res.json({

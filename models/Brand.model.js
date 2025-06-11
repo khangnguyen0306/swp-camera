@@ -13,6 +13,10 @@ const BrandSchema = new Schema({
     type: String,
     default: '',
   }, // Mô tả thương hiệu
+  image: {
+    type: String,
+    default: '',
+  }, // URL hoặc đường dẫn ảnh thương hiệu
 }, {
   timestamps: true, // Thêm các trường createdAt và updatedAt
 });
