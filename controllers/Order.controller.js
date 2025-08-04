@@ -342,6 +342,7 @@ export const getAllOrders = asyncHandler(async (req, res) => {
             path: 'items.product',
             select: 'name price images'
         })
+        .sort({ createdAt: -1 })
         .limit(pageSize)
         .skip(pageSize * (page - 1));
 

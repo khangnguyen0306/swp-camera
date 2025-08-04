@@ -101,8 +101,8 @@ export const createPayOSPayment = asyncHandler(async (req, res) => {
             quantity: item.quantity,
             price: item.price
         })),
-        cancelUrl: `${process.env.FRONTEND_URL}/payment/cancel`,
-        returnUrl: `${process.env.FRONTEND_URL}/payment/success`,
+        cancelUrl: `${process.env.FRONTEND_URL}/payment/cancel/${order._id}`,
+        returnUrl: `${process.env.FRONTEND_URL}/payment/success/${order._id}`,
         buyerName: order.customerInfo.username,
         buyerEmail: order.customerInfo.email,
         expiredAt: Math.floor(Date.now() / 1000) + (24 * 60 * 60)

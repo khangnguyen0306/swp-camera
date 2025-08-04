@@ -41,7 +41,6 @@ const PaymentSchema = new Schema({
 const OrderSchema = new Schema({
     orderCode: {
         type: Number,
-        required: true,
         unique: true
     },
     customer: { 
