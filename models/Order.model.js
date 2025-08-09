@@ -61,7 +61,9 @@ const OrderSchema = new Schema({
     },
     customerInfo: {
         username: { type: String, required: true },
-        email: { type: String, required: true }
+        email: { type: String, required: true },
+        phone: { type: String },
+        address: { type: String }
     },
     payment: {
         type: PaymentSchema,

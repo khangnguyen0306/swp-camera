@@ -342,6 +342,7 @@ export const getAllOrders = asyncHandler(async (req, res) => {
             path: 'items.product',
             select: 'name price images'
         })
+        .select('orderCode customer items totalAmount status customerInfo payment pickupTime note createdAt updatedAt')
         .sort({ createdAt: -1 })
         .limit(pageSize)
         .skip(pageSize * (page - 1));
@@ -397,7 +398,8 @@ export const getCustomerOrders = asyncHandler(async (req, res) => {
         .populate({
             path: 'items.product',
             select: 'name price images'
-        });
+        })
+        .select('orderCode customer items totalAmount status customerInfo payment pickupTime note createdAt updatedAt');
     
     res.json({
         success: true,
@@ -448,7 +450,8 @@ export const getOrderById = asyncHandler(async (req, res) => {
         .populate({
             path: 'items.product',
             select: 'name price images'
-        });
+        })
+        .select('orderCode customer items totalAmount status customerInfo payment pickupTime note createdAt updatedAt');
     
     if (!order) {
         res.status(404);
@@ -612,6 +615,7 @@ export const getOrdersByStatus = asyncHandler(async (req, res) => {
             path: 'items.product',
             select: 'name price images'
         })
+        .select('orderCode customer items totalAmount status customerInfo payment pickupTime note createdAt updatedAt')
         .limit(pageSize)
         .skip(pageSize * (page - 1));
 
